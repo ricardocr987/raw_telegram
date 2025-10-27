@@ -28,19 +28,10 @@ export async function handleSwapStep(callbackQuery: CallbackQuery, data: string)
 
   
   const { step } = userState.swapState;
-  
+  console.log(`[handleSwapStep] step: ${step}`);
   switch (step) {
     case 'select_input':
-      if (data.length === 44) {
-        await handleInputSelection(chatId, data);
-      } else {
-        await sendText(chatId, '❌ Invalid token selection');
-      }
-      break;
-      
-    case 'enter_output':
-      // Handled in messages handler
-      await sendText(chatId, 'Please wait or send the token symbol...');
+      await handleInputSelection(chatId, data);
       break;
       
     case 'select_amount':
@@ -48,11 +39,8 @@ export async function handleSwapStep(callbackQuery: CallbackQuery, data: string)
       await handleAmountSelection(chatId, data);
       break;
       
-    case 'completing':
-      // Already completing, ignore
-      break;
-      
     default:
+      clearUserState(chatId);
       await sendText(chatId, '❌ Invalid state');
   }
 }
@@ -79,8 +67,27 @@ export async function initTradeSwap(chatId: number, messageId?: number): Promise
       },
     });
 
-    // Check if we have any tokens
-    if (holdings.tokenHoldings.length === 0) {
+    // Prepare all tokens including SOL
+    const allTokens = [];
+    
+    // Add SOL first if balance > 0 (SOL native mint address)
+    if (holdings.solUiAmount > 0) {
+      allTokens.push({
+        symbol: 'SOL',
+        mint: 'So11111111111111111111111111111111111111112', // SOL native mint
+        uiAmount: holdings.solUiAmount,
+        decimals: 9
+      });
+    }
+    
+    // Add other tokens
+    holdings.tokenHoldings.forEach(tokenHolding => {
+      if (tokenHolding.uiAmount > 0) {
+        allTokens.push(tokenHolding);
+      }
+    });
+
+    if (allTokens.length === 0) {
       if (messageId) {
         await editMessageWithButtons(chatId, messageId, '❌ No tokens found in your wallet.', tradeMenu);
       } else {
@@ -91,9 +98,7 @@ export async function initTradeSwap(chatId: number, messageId?: number): Promise
     }
 
     // Create inline keyboard with user's tokens
-    const keyboardButtons = holdings.tokenHoldings.slice(0, 10).map((tokenHolding: { symbol: string; mint: string; uiAmount: number }) => {
-      if (tokenHolding.uiAmount === 0) return null;
-      
+    const keyboardButtons = allTokens.slice(0, 10).map((tokenHolding: { symbol: string; mint: string; uiAmount: number }) => {
       const amount = tokenHolding.uiAmount.toFixed(4);
       
       return [
@@ -162,12 +167,28 @@ async function handleInputSelection(chatId: number, tokenAddress: string): Promi
     const wallet = await getOrCreateWallet(chatId);
     const holdings = await getHoldingsData(wallet.address);
     
-    // Find the token holding by mint address
-    const tokenHolding = holdings.tokenHoldings.find((t: { mint: string }) => t.mint === tokenAddress);
+    // Check if it's SOL (native mint)
+    const isSOL = tokenAddress === 'So11111111111111111111111111111111111111112';
     
-    if (!tokenHolding) {
-      await sendText(chatId, '❌ Token data not found.');
-      return;
+    let tokenHolding;
+    
+    if (isSOL) {
+      // Handle SOL
+      tokenHolding = {
+        symbol: 'SOL',
+        mint: 'So11111111111111111111111111111111111111112',
+        decimals: 9,
+        uiAmount: holdings.solUiAmount,
+        amount: holdings.solUiAmount.toString()
+      };
+    } else {
+      // Find the token holding by mint address
+      tokenHolding = holdings.tokenHoldings.find((t: { mint: string }) => t.mint === tokenAddress);
+      
+      if (!tokenHolding) {
+        await sendText(chatId, '❌ Token data not found.');
+        return;
+      }
     }
 
     // Update state with full token info
@@ -201,18 +222,27 @@ async function handleInputSelection(chatId: number, tokenAddress: string): Promi
 }
 
 /**
- * Handle amount selection by percentage or manual entry
- * Simplified callback format: swap_percent_0.25 or swap_manual
+ * Handle amount selection by percentage
+ * Callback format: swap_percent_25, swap_percent_50, swap_percent_75, swap_percent_100
  */
 async function handleAmountSelection(chatId: number, data: string): Promise<void> {
-    const percentageStr = data.replace('swap_percent_', '');
-    const percentage = Number(percentageStr);
-    
-    if (percentage > 0 && percentage <= 100) {
-      await handleAmountByPercentage(chatId, percentage);
-    } else {
-      await sendText(chatId, '❌ Invalid percentage');
-    }
+  // Validate callback format
+  if (!data.startsWith('swap_percent_')) {
+    await sendText(chatId, '❌ Invalid request');
+    return;
+  }
+
+  // Extract and validate percentage
+  const percentageStr = data.replace('swap_percent_', '');
+  const percentage = Number(percentageStr);
+  
+  if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
+    await sendText(chatId, '❌ Invalid percentage');
+    return;
+  }
+
+  // Handle the swap
+  await handleAmountByPercentage(chatId, percentage);
 }
 
 /**
@@ -229,11 +259,11 @@ async function handleAmountByPercentage(chatId: number, percentage: number): Pro
 
     const totalAmount = parseFloat(userState.swapState.inputToken.amount);
     const swapAmount = totalAmount * percentage / 100;
-
-    await updateUserSwapState(chatId, {
-      step: 'completing',
-      amount: swapAmount.toString(),
-    });
+    const { decimals } = userState.swapState.inputToken;
+    
+    // Calculate native amount - only round down if NOT 100%
+    const amountToConvert = swapAmount * 10 ** decimals;
+    const nativeAmount = (percentage === 100 ? amountToConvert : Math.floor(amountToConvert)).toString();
 
     // Edit the message to show processing
     const messageId = userState.swapState.messageId;
@@ -249,7 +279,7 @@ async function handleAmountByPercentage(chatId: number, percentage: number): Pro
     }
     
     // Execute the swap
-    await executeSwap(chatId, swapAmount);
+    await executeSwap(chatId, swapAmount, nativeAmount);
   } catch (error) {
     console.error('Error in handleAmountByPercentage:', error);
     await sendText(chatId, '❌ Error processing amount selection. Please try again.');
@@ -258,56 +288,34 @@ async function handleAmountByPercentage(chatId: number, percentage: number): Pro
 }
 
 /**
- * Handle manual amount entry trigger
- */
-async function handleManualAmountEntry(chatId: number): Promise<void> {
-  const userState = await getUserState(chatId);
-  if (!userState?.swapState) {
-    await sendText(chatId, '❌ Invalid request. Please start a new swap.');
-    return;
-  }
-
-  await updateUserSwapState(chatId, { step: 'select_amount' });
-  
-  // Edit the message to ask for manual amount entry
-  const messageId = userState.swapState.messageId;
-  if (messageId) {
-    await editMessageWithButtons(
-      chatId,
-      messageId,
-      '📝 Please enter the exact amount you want to swap:',
-      { inline_keyboard: [] }
-    );
-  } else {
-    await sendText(chatId, '📝 Please enter the exact amount you want to swap:');
-  }
-}
-
-/**
  * Execute swap with manually entered amount
  */
 export async function executeSwapWithAmount(chatId: number, swapAmount: number): Promise<void> {
   try {
-    await updateUserSwapState(chatId, { 
-      amount: swapAmount.toString(),
-      step: 'completing'
-    });
-    
-    // Get user state to show confirmation
     const userState = await getUserState(chatId);
-    if (userState?.swapState) {
-      const messageId = userState.swapState.messageId;
-      const messageText = `✅ Swap Confirmed!\n\n` +
-        `From: ${swapAmount} ${userState.swapState.inputToken?.symbol}\n` +
-        `To: ${userState.swapState.outputToken?.symbol || 'Unknown'}\n\n` +
-        `🔄 Processing swap...`;
-      
-      if (messageId) {
-        await editMessageWithButtons(chatId, messageId, messageText, { inline_keyboard: [] });
-      }
+    if (!userState?.swapState?.inputToken) {
+      await sendText(chatId, '❌ Invalid swap state');
+      await clearUserState(chatId);
+      return;
+    }
+
+    // Calculate native amount - always round down for manual entry
+    const { decimals } = userState.swapState.inputToken;
+    const amountToConvert = swapAmount * 10 ** decimals;
+    const nativeAmount = Math.floor(amountToConvert).toString();
+
+    const messageId = userState.swapState.messageId;
+    const messageText = `✅ Swap Confirmed!\n\n` +
+      `From: ${swapAmount} ${userState.swapState.inputToken.symbol}\n` +
+      `To: ${userState.swapState.outputToken?.symbol || 'Unknown'}\n\n` +
+      `🔄 Processing swap...`;
+    
+    if (messageId) {
+      await editMessageWithButtons(chatId, messageId, messageText, { inline_keyboard: [] });
     }
     
-    await executeSwap(chatId, swapAmount);
+    // Execute the swap
+    await executeSwap(chatId, swapAmount, nativeAmount);
   } catch (error) {
     console.error('Error in executeSwapWithAmount:', error);
     await sendText(chatId, '❌ Error executing swap. Please try again.');
@@ -358,7 +366,7 @@ export async function storeOutputToken(chatId: number, tokenData: { mint: string
 /**
  * Execute the swap transaction
  */
-async function executeSwap(chatId: number, swapAmount: number): Promise<void> {
+async function executeSwap(chatId: number, swapAmount: number, nativeAmount: string): Promise<void> {
   try {
     const userState = await getUserState(chatId);
     if (!userState?.swapState?.inputToken || !userState.swapState.outputToken) {
@@ -376,13 +384,15 @@ async function executeSwap(chatId: number, swapAmount: number): Promise<void> {
       return;
     }
 
-    // Convert UI amount to native token units
-    const nativeAmount = BigInt(swapAmount * 10 ** inputToken.decimals).toString();
+    console.log('swapAmount', swapAmount, 'nativeAmount', nativeAmount);
+    console.log('Converting nativeAmount to BigInt...', nativeAmount);
+
+    const nativeAmountBigInt = BigInt(nativeAmount).toString();
 
     console.log('Getting Ultra order:', {
       inputMint: inputToken.mint,
       outputMint: outputToken.mint,
-      amount: nativeAmount,
+      amount: nativeAmountBigInt,
       taker: wallet.address
     });
 
@@ -390,7 +400,7 @@ async function executeSwap(chatId: number, swapAmount: number): Promise<void> {
     const orderResponse = await getUltraOrder(
       inputToken.mint,
       outputToken.mint,
-      nativeAmount,
+      nativeAmountBigInt,
       wallet.address
     );
 

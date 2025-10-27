@@ -11,7 +11,7 @@ export interface TokenInfo {
 export interface UserState {
   chatId: number;
   swapState?: {
-    step: 'select_input' | 'enter_output' | 'select_amount' | 'completing';
+    step: 'select_input' | 'enter_output' | 'select_amount';
     messageId?: number; // Store messageId to edit the same message throughout flow
     inputToken?: TokenInfo;
     outputToken?: TokenInfo;
