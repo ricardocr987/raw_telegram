@@ -127,7 +127,6 @@ export async function handleMessage(message: TelegramMessage): Promise<void> {
     default:
       // Check for active flows
       const userState = await getUserState(chatId);
-      
       if (!userState) return;
       
       // Switch on active flow type
