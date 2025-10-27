@@ -1,0 +1,19 @@
+{
+  "name": "raw_telegram",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@privy-io/server-auth": "^1.32.5",
+    "@solana/web3.js": "^1.98.4"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts"
+  }
+}

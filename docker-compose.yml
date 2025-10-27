@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: raw-telegram-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - raw-telegram-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: raw-telegram-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://signalor:signalor_password@postgres:5432/signalor
+      REDIS_URL: redis://redis:6379
+      BOT_TELEGRAM_KEY: ${BOT_TELEGRAM_KEY}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      RPC_ENDPOINT: ${RPC_ENDPOINT}
+      HELIUS_API_KEY: ${HELIUS_API_KEY}
+      JUPITER_API_KEY: ${JUPITER_API_KEY}
+      PRIVY_APP_ID: ${PRIVY_APP_ID}
+      PRIVY_APP_SECRET: ${PRIVY_APP_SECRET}
+      PRIVY_AUTHORIZATION_KEY_ID: ${PRIVY_AUTHORIZATION_KEY_ID}
+    ports:
+      - "3000:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - raw-telegram-network
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+    command: sh -c "bun run start"
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  raw-telegram-network:
+    driver: bridge
