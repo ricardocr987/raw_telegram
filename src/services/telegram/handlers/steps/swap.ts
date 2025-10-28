@@ -5,7 +5,7 @@ import { getOrCreateWallet } from '../../../privy';
 import { getUltraOrder, executeUltraOrder } from '../../../jupiter/ultra';
 import { signTransaction } from '../../../privy';
 import type { InlineKeyboard } from '../../types';
-import { createAmountSelector, tradeMenu } from '../../menu';
+import { percentageAmountMenu, successMenu, tradeMenu } from '../../menu';
 import { getHoldingsData } from '../../../../utils/enrichedHoldings';
 
 /**
@@ -184,7 +184,7 @@ async function handleInputSelection(chatId: number, tokenAddress: string): Promi
     } else {
       // Find the token holding by mint address
       tokenHolding = holdings.tokenHoldings.find((t: { mint: string }) => t.mint === tokenAddress);
-      
+      console.log(`[handleInputSelection] tokenHolding: ${JSON.stringify(tokenHolding, null, 2)}`);
       if (!tokenHolding) {
         await sendText(chatId, '❌ Token data not found.');
         return;
@@ -344,17 +344,16 @@ export async function storeOutputToken(chatId: number, tokenData: { mint: string
     
     // Show confirmation with amount selector
     const totalAmount = parseFloat(userState?.swapState?.inputToken?.amount || '0');
-    const keyboard = createAmountSelector(chatId);
-    
+
     const messageText = `✅ Confirmed Swap:\n\n` +
       `From: ${totalAmount} ${userState?.swapState?.inputToken?.symbol}\n` +
       `To: ${tokenData.symbol}\n\n` +
       `Please select the amount to swap or type it manually:`;
 
     if (messageId) {
-      await editMessageWithButtons(chatId, messageId, messageText, keyboard);
+      await editMessageWithButtons(chatId, messageId, messageText, percentageAmountMenu);
     } else {
-      await sendTextWithButtons(chatId, messageText, keyboard);
+      await sendTextWithButtons(chatId, messageText, percentageAmountMenu);
     }
   } catch (error) {
     console.error('Error storing output token:', error);
@@ -452,20 +451,11 @@ async function executeSwap(chatId: number, swapAmount: number, nativeAmount: str
       `**Transaction:** ${executeResponse.signature}\n\n` +
       `[View on Solscan](https://solscan.io/tx/${executeResponse.signature})`;
 
-    const keyboard: InlineKeyboard = {
-      inline_keyboard: [
-        [
-          { text: '🔄 New Swap', callback_data: 'trade_swap' },
-          { text: '🏠 Main Menu', callback_data: 'back_main' },
-        ],
-      ],
-    };
-
     // Edit the message to show success if messageId exists, otherwise send new message
     if (messageId) {
-      await editMessageWithButtons(chatId, messageId, message, keyboard);
+      await editMessageWithButtons(chatId, messageId, message, successMenu);
     } else {
-      await sendTextWithButtons(chatId, message, keyboard);
+      await sendTextWithButtons(chatId, message, successMenu);
     }
 
   } catch (error) {

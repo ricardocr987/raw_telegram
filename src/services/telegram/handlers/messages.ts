@@ -1,7 +1,7 @@
 import type { TelegramMessage } from '../types';
 import { sendText, sendTextWithButtons } from '../core';
 import { getUserState, clearUserState } from '../state';
-import { mainMenu, createAmountSelector } from '../menu';
+import { mainMenu } from '../menu';
 import { getOrCreateWallet } from '../../privy';
 import { getTokenBySymbolOrAddress } from '../../jupiter/tokens';
 import { storeOutputToken, executeSwapWithAmount } from './steps/swap';
