@@ -102,7 +102,18 @@ export async function depositEarn(request: EarnAmountRequestBody): Promise<Trans
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as TransactionResponse;
@@ -123,7 +134,18 @@ export async function withdrawEarn(request: EarnAmountRequestBody): Promise<Tran
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as TransactionResponse;
@@ -144,7 +166,18 @@ export async function mintEarn(request: EarnSharesRequestBody): Promise<Transact
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as TransactionResponse;
@@ -165,7 +198,18 @@ export async function redeemEarn(request: EarnSharesRequestBody): Promise<Transa
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as TransactionResponse;
@@ -186,7 +230,18 @@ export async function getDepositInstructions(request: EarnAmountRequestBody): Pr
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as InstructionResponse;
@@ -207,7 +262,18 @@ export async function getWithdrawInstructions(request: EarnAmountRequestBody): P
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as InstructionResponse;
@@ -228,7 +294,18 @@ export async function getMintInstructions(request: EarnSharesRequestBody): Promi
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as InstructionResponse;
@@ -249,7 +326,18 @@ export async function getRedeemInstructions(request: EarnSharesRequestBody): Pro
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as InstructionResponse;
@@ -268,7 +356,18 @@ export async function getEarnTokens(): Promise<TokenInfo[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as TokenInfo[];
@@ -291,7 +390,18 @@ export async function getEarnPositions(users: string): Promise<UserPosition[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as UserPosition[];
@@ -315,7 +425,18 @@ export async function getEarnEarnings(user: string, positions: string): Promise<
     });
 
     if (!response.ok) {
-      throw new Error(`Lend API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Lend API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as UserEarningsResponse;

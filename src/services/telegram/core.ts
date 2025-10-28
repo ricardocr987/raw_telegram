@@ -53,19 +53,13 @@ export async function editMessageWithButtons(
     reply_markup: keyboard,
   };
 
-  const response = await fetch(url, {
+  await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
-
-  const result = await response.json() as { ok: boolean; description?: string };
-
-  if (!response.ok || !result.ok) {
-    throw new Error(`Failed to edit message: ${JSON.stringify(result)}`);
-  }
 }
 
 /**

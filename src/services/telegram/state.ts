@@ -18,12 +18,25 @@ export interface UserState {
     amount?: string; // UI amount to swap
   };
   limitOrderState?: {
-    step: string;
-    // TODO: Add limit order fields
+    step: 'select_direction' | 'select_input' | 'enter_output' | 'enter_price' | 'enter_amount' | 'confirm';
+    messageId?: number;
+    direction?: 'buy' | 'sell';
+    inputToken?: TokenInfo;
+    outputToken?: TokenInfo;
+    price?: string;
+    triggerPrice?: number; // Calculated trigger price (for UI display)
+    amount?: string;
+    currentPrice?: number; // Current price for reference
   };
   dcaState?: {
     step: string;
     // TODO: Add DCA fields
+  };
+  withdrawState?: {
+    step: 'enter_address' | 'select_token' | 'select_amount';
+    messageId?: number;
+    recipientAddress?: string;
+    token?: TokenInfo;
   };
 }
 
@@ -85,6 +98,48 @@ export async function updateUserSwapState(
     }
   } catch (error) {
     console.error('Error updating user swap state in Redis:', error);
+  }
+}
+
+/**
+ * Update user withdraw state
+ */
+export async function updateUserWithdrawState(
+  chatId: number,
+  updates: Partial<NonNullable<UserState['withdrawState']>>
+): Promise<void> {
+  try {
+    const currentState = await getUserState(chatId);
+    if (currentState) {
+      if (!currentState.withdrawState) {
+        currentState.withdrawState = { step: 'enter_address' };
+      }
+      Object.assign(currentState.withdrawState, updates);
+      await setUserState(chatId, currentState);
+    }
+  } catch (error) {
+    console.error('Error updating user withdraw state in Redis:', error);
+  }
+}
+
+/**
+ * Update user limit order state
+ */
+export async function updateUserLimitOrderState(
+  chatId: number,
+  updates: Partial<NonNullable<UserState['limitOrderState']>>
+): Promise<void> {
+  try {
+    const currentState = await getUserState(chatId);
+    if (currentState) {
+      if (!currentState.limitOrderState) {
+        currentState.limitOrderState = { step: 'select_direction' };
+      }
+      Object.assign(currentState.limitOrderState, updates);
+      await setUserState(chatId, currentState);
+    }
+  } catch (error) {
+    console.error('Error updating user limit order state in Redis:', error);
   }
 }
 

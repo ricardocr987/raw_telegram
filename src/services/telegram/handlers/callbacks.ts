@@ -1,10 +1,13 @@
 import type { CallbackQuery } from '../types';
 import { answerCallbackQuery, editMessageWithButtons, sendText, sendTextWithButtons } from '../core';
 import { getUserState, clearUserState } from '../state';
-import { mainMenu, tradeMenu } from '../menu';
+import { infoMenu, mainMenu, tradeMenu } from '../menu';
+import { handleOpenOrders } from './info/orders';
+import { handleHoldings } from './info/holdings';
 import * as swapStep from './steps/swap';
 import * as limitOrderStep from './steps/limitOrder';
 import * as dcaStep from './steps/dca';
+import * as withdrawStep from './steps/withdraw';
 
 /**
  * Handle callback query from inline keyboard
@@ -26,15 +29,11 @@ export async function handleCallback(callbackQuery: CallbackQuery): Promise<void
         break;
       
       case 'info':
-        await sendText(chatId, 'ℹ️ Bot information coming soon...');
+        await editMessageWithButtons(chatId, messageId, 'ℹ️ Wallet information', infoMenu);
         break;
       
       case 'withdraw':
-        await sendText(chatId, '💸 Withdraw feature coming soon...');
-        break;
-      
-      case 'lend':
-        await sendText(chatId, '💰 Lend feature coming soon...');
+        await withdrawStep.initWithdraw(chatId, messageId);
         break;
       
       case 'back_main':
@@ -49,13 +48,22 @@ export async function handleCallback(callbackQuery: CallbackQuery): Promise<void
         await sendTextWithButtons(chatId, '🔄 New Operation', mainMenu);
         break;
       
+      // Info menu handlers
+      case 'info_open_orders':
+        await handleOpenOrders(chatId, messageId);
+        break;
+      
+      case 'info_holdings':
+        await handleHoldings(chatId, messageId);
+        break;
+      
       // Trade menu
       case 'trade_swap':
         await swapStep.initTradeSwap(chatId, messageId);
         break;
       
       case 'trade_limit':
-        await sendText(chatId, '📈 Limit Order feature - coming soon!');
+        await limitOrderStep.initLimitOrder(chatId, messageId);
         break;
       
       case 'trade_dca':
@@ -81,6 +89,12 @@ export async function handleCallback(callbackQuery: CallbackQuery): Promise<void
         if (userState?.dcaState) {
           // User has active DCA - route to DCA step handler
           await dcaStep.handleDcaStep(callbackQuery, data);
+          return;
+        }
+        
+        if (userState?.withdrawState) {
+          // User has active withdraw - route to withdraw step handler
+          await withdrawStep.handleWithdrawStep(callbackQuery, data);
           return;
         }
         break;

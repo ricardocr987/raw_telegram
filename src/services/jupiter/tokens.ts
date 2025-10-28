@@ -83,14 +83,25 @@ export async function searchTokens(query: string): Promise<TokenSearchResult[]> 
       query: query.trim()
     });
 
-    const response = await fetch(`${TOKEN_SEARCH_BASE_URL}/search?${params}`, {
+    const response: Response = await fetch(`${TOKEN_SEARCH_BASE_URL}/search?${params}`, {
       headers: {
         'accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Token search API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Token search API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const results = await response.json() as TokenSearchResult[];
@@ -137,14 +148,25 @@ export async function getTrendingTokens(
       limit: limit.toString()
     });
 
-    const response = await fetch(`${TOKEN_TRENDING_BASE_URL}/${category}/${interval}?${params}`, {
+    const response: Response = await fetch(`${TOKEN_TRENDING_BASE_URL}/${category}/${interval}?${params}`, {
       headers: {
         'accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Trending tokens API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Trending tokens API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const results = await response.json() as MintInformation[];
@@ -225,14 +247,25 @@ export async function getTokensByTag(tag: TokenTag): Promise<MintInformation[]> 
       query: tag
     });
 
-    const response = await fetch(`${TOKEN_SEARCH_BASE_URL}/tag?${params}`, {
+    const response: Response = await fetch(`${TOKEN_SEARCH_BASE_URL}/tag?${params}`, {
       headers: {
         'accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Token tag API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Token tag API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const results = await response.json() as MintInformation[];
@@ -246,14 +279,25 @@ export async function getTokensByTag(tag: TokenTag): Promise<MintInformation[]> 
 // Recent tokens (first pool created)
 export async function getRecentTokens(): Promise<MintInformation[]> {
   try {
-    const response = await fetch(`${TOKEN_SEARCH_BASE_URL}/recent`, {
+    const response: Response = await fetch(`${TOKEN_SEARCH_BASE_URL}/recent`, {
       headers: {
         'accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Recent tokens API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Recent tokens API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const results = await response.json() as MintInformation[];
@@ -283,14 +327,25 @@ export async function getTokenPrices(mintAddresses: string[]): Promise<TokenPric
       ids: mintAddresses.join(',')
     });
 
-    const response = await fetch(`${PRICE_BASE_URL}?${params}`, {
+    const response: Response = await fetch(`${PRICE_BASE_URL}?${params}`, {
       headers: {
         'accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Token prices API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Token prices API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const prices = await response.json() as TokenPricesResponse;

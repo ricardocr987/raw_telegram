@@ -158,7 +158,18 @@ export async function createRecurringOrder(
     });
 
     if (!response.ok) {
-      throw new Error(`Recurring API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Recurring API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const result = await response.json() as RecurringResponse;
@@ -183,7 +194,18 @@ export async function executeRecurringOrder(
     });
 
     if (!response.ok) {
-      throw new Error(`Recurring API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Recurring API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as ExecuteRecurringResponse;
@@ -206,7 +228,18 @@ export async function cancelRecurringOrder(
     });
 
     if (!response.ok) {
-      throw new Error(`Recurring API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Recurring API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as RecurringResponse;
@@ -244,7 +277,18 @@ export async function getRecurringOrders(
     });
 
     if (!response.ok) {
-      throw new Error(`Recurring API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Recurring API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as GetRecurringOrdersResponse;

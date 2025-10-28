@@ -124,7 +124,18 @@ export async function createTriggerOrder(
     });
 
     if (!response.ok) {
-      throw new Error(`Trigger API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Trigger API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const result = await response.json() as CreateOrderResponse;
@@ -151,7 +162,18 @@ export async function executeTriggerOrder(
     });
 
     if (!response.ok) {
-      throw new Error(`Trigger API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Trigger API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const result = await response.json() as ExecuteResponse;

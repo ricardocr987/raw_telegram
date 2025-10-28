@@ -7,6 +7,7 @@ import { signTransaction } from '../../../privy';
 import type { InlineKeyboard } from '../../types';
 import { percentageAmountMenu, successMenu, tradeMenu } from '../../menu';
 import { getHoldingsData } from '../../../../utils/enrichedHoldings';
+import { showWalletTokenSelection, handleTokenSelection, type TokenHolding } from '../shared/tokenSelection';
 
 /**
  * Handle swap flow based on current state
@@ -31,7 +32,7 @@ export async function handleSwapStep(callbackQuery: CallbackQuery, data: string)
   console.log(`[handleSwapStep] step: ${step}`);
   switch (step) {
     case 'select_input':
-      await handleInputSelection(chatId, data);
+      await handleSwapInputSelection(chatId, data);
       break;
       
     case 'select_amount':
@@ -51,12 +52,6 @@ export async function handleSwapStep(callbackQuery: CallbackQuery, data: string)
 export async function initTradeSwap(chatId: number, messageId?: number): Promise<void> {
   try {
     console.log(`[initTradeSwap] Starting for chat ${chatId}`);
-    const wallet = await getOrCreateWallet(chatId);
-    console.log(`[initTradeSwap] Got wallet: ${wallet.address}`);
-    
-    console.log(`[initTradeSwap] Fetching enriched holdings for ${wallet.address}`);
-    const holdings = await getHoldingsData(wallet.address);
-    console.log(`[initTradeSwap] Got holdings:`, JSON.stringify(holdings, null, 2));
 
     // Initialize swap state with messageId
     await setUserState(chatId, {
@@ -67,73 +62,16 @@ export async function initTradeSwap(chatId: number, messageId?: number): Promise
       },
     });
 
-    // Prepare all tokens including SOL
-    const allTokens = [];
-    
-    // Add SOL first if balance > 0 (SOL native mint address)
-    if (holdings.solUiAmount > 0) {
-      allTokens.push({
-        symbol: 'SOL',
-        mint: 'So11111111111111111111111111111111111111112', // SOL native mint
-        uiAmount: holdings.solUiAmount,
-        decimals: 9
-      });
-    }
-    
-    // Add other tokens
-    holdings.tokenHoldings.forEach(tokenHolding => {
-      if (tokenHolding.uiAmount > 0) {
-        allTokens.push(tokenHolding);
+    await showWalletTokenSelection({
+      chatId,
+      messageId,
+      title: '📊 Select the token you want to swap FROM:',
+      backCallbackData: 'back_to_trade',
+      onTokenSelected: handleSwapInputSelection,
+      onError: async (chatId, error) => {
+        await sendText(chatId, `❌ Error loading holdings: ${error}`);
       }
     });
-
-    if (allTokens.length === 0) {
-      if (messageId) {
-        await editMessageWithButtons(chatId, messageId, '❌ No tokens found in your wallet.', tradeMenu);
-      } else {
-        await sendText(chatId, '❌ No tokens found in your wallet.');
-      }
-      await clearUserState(chatId);
-      return;
-    }
-
-    // Create inline keyboard with user's tokens
-    const keyboardButtons = allTokens.slice(0, 10).map((tokenHolding: { symbol: string; mint: string; uiAmount: number }) => {
-      const amount = tokenHolding.uiAmount.toFixed(4);
-      
-      return [
-        {
-          text: `${tokenHolding.symbol} - ${amount}`,
-          callback_data: tokenHolding.mint,
-        },
-      ];
-    }).filter(Boolean) as InlineKeyboard['inline_keyboard'];
-
-    const keyboard: InlineKeyboard = {
-      inline_keyboard: [
-        ...keyboardButtons,
-        [
-          { text: '⬅️ Back', callback_data: 'back_to_trade' },
-        ],
-      ],
-    };
-
-    console.log(`[initTradeSwap] Created keyboard with ${keyboardButtons.length} tokens`);
-
-    if (messageId) {
-      await editMessageWithButtons(
-        chatId,
-        messageId,
-        '📊 Select the token you want to swap FROM:',
-        keyboard
-      );
-    } else {
-      await sendTextWithButtons(
-        chatId,
-        '📊 Select the token you want to swap FROM:',
-        keyboard
-      );
-    }
   } catch (error) {
     console.error('[initTradeSwap] Error initiating swap:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -156,39 +94,12 @@ export async function initTradeSwap(chatId: number, messageId?: number): Promise
 /**
  * Handle input token selection
  */
-async function handleInputSelection(chatId: number, tokenAddress: string): Promise<void> {
-  try {
+async function handleSwapInputSelection(chatId: number, tokenAddress: string): Promise<void> {
+  await handleTokenSelection(chatId, tokenAddress, async (chatId, tokenHolding) => {
     const userState = await getUserState(chatId);
     if (!userState?.swapState) {
       await sendText(chatId, '❌ Invalid state.');
       return;
-    }
-
-    const wallet = await getOrCreateWallet(chatId);
-    const holdings = await getHoldingsData(wallet.address);
-    
-    // Check if it's SOL (native mint)
-    const isSOL = tokenAddress === 'So11111111111111111111111111111111111111112';
-    
-    let tokenHolding;
-    
-    if (isSOL) {
-      // Handle SOL
-      tokenHolding = {
-        symbol: 'SOL',
-        mint: 'So11111111111111111111111111111111111111112',
-        decimals: 9,
-        uiAmount: holdings.solUiAmount,
-        amount: holdings.solUiAmount.toString()
-      };
-    } else {
-      // Find the token holding by mint address
-      tokenHolding = holdings.tokenHoldings.find((t: { mint: string }) => t.mint === tokenAddress);
-      console.log(`[handleInputSelection] tokenHolding: ${JSON.stringify(tokenHolding, null, 2)}`);
-      if (!tokenHolding) {
-        await sendText(chatId, '❌ Token data not found.');
-        return;
-      }
     }
 
     // Update state with full token info
@@ -214,11 +125,7 @@ async function handleInputSelection(chatId: number, tokenAddress: string): Promi
     } else {
       await sendText(chatId, `✅ Input token: ${tokenHolding.symbol}\n\n📝 Please send the token symbol or address you want to swap TO:\n\n(Example: SOL, USDC, or token address)`);
     }
-  } catch (error) {
-    console.error('Error selecting input token:', error);
-    await sendText(chatId, '❌ Error processing token. Please try again.');
-    await clearUserState(chatId);
-  }
+  });
 }
 
 /**

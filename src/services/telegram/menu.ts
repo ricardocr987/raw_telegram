@@ -21,6 +21,19 @@ export const percentageAmountMenu = {
   ],
 };
 
+export const withdrawAmountMenu = {
+  inline_keyboard: [
+    [
+      { text: '25%', callback_data: `withdraw_percent_25` },
+      { text: '50%', callback_data: `withdraw_percent_50` },
+    ],
+    [
+      { text: '75%', callback_data: `withdraw_percent_75` },
+      { text: '100%', callback_data: `withdraw_percent_100` },
+    ],
+  ],
+};
+
 export const tradeMenu = {
   inline_keyboard: [
     [
@@ -38,10 +51,49 @@ export const tradeMenu = {
   ],
 };
 
+export const infoMenu = {
+  inline_keyboard: [
+    [
+      { text: '💼 Holdings', callback_data: 'info_holdings' },
+      { text: '📊 Open orders', callback_data: 'info_open_orders' },
+    ],
+    [
+      { text: '🎯 Transaction history', callback_data: 'info_transaction_history' },
+      { text: '💾 Export wallet', callback_data: 'info_export_wallet' },
+    ],
+    [
+      { text: '⬅️ Back', callback_data: 'back_main' },
+    ],
+  ],
+};
+
 export const successMenu = {
   inline_keyboard: [
     [
       { text: '🔄 New Operation', callback_data: 'new_operation' },
+    ],
+  ],
+};
+
+export const buyOrSellMenu = {
+  inline_keyboard: [
+    [
+      { text: '🟢 Buy', callback_data: 'limit_order_buy' },
+      { text: '🔴 Sell', callback_data: 'limit_order_sell' },
+    ],
+    [
+      { text: '⬅️ Back', callback_data: 'back_to_trade' },
+    ],
+  ],
+};
+
+export const confirmOrderMenu = {
+  inline_keyboard: [
+    [
+      { text: '✅ Confirm', callback_data: 'limit_order_confirm' },
+    ],
+    [
+      { text: '❌ Cancel', callback_data: 'limit_order_cancel' },
     ],
   ],
 };

@@ -60,7 +60,18 @@ export async function jupiterSwapInstructions(
     });
 
     if (!response.ok) {
-      throw new Error(`Jupiter API error: ${response.status} ${response.statusText}`);
+      let errorMessage = `Jupiter API error: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorBody = await response.json() as { error?: string; errorMessage?: string; code?: number };
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+        }
+      } catch (e) {
+        // If we can't parse the error body, use the default message
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json() as JupiterSwapInstructions;
