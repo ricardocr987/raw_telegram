@@ -6,10 +6,13 @@ export const config = {
   TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET || '',
   WEBHOOK_URL: process.env.WEBHOOK_URL || '',
 
+  // Solana configuration
   JUPITER_API_KEY: process.env.JUPITER_API_KEY || '',
   RPC_ENDPOINT: process.env.RPC_ENDPOINT || '',
   RPC_CONNECTION: new Connection(process.env.RPC_ENDPOINT || ''),
   HELIUS_API_KEY: process.env.HELIUS_API_KEY || '',
+
+  // Server configuration
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '3000'),
   
@@ -19,20 +22,19 @@ export const config = {
   // Privy configuration
   PRIVY_APP_ID: process.env.PRIVY_APP_ID || '',
   PRIVY_APP_SECRET: process.env.PRIVY_APP_SECRET || '',
-  PRIVY_AUTHORIZATION_KEY_ID: process.env.PRIVY_AUTHORIZATION_KEY_ID || '',
-  PRIVY_AUTH_ID: process.env.PRIVY_AUTH_ID || '',
+  PRIVY_AUTHORIZATION_KEY: process.env.PRIVY_AUTHORIZATION_KEY || '',
+  PRIVY_AUTHORIZATION_ID: process.env.PRIVY_AUTHORIZATION_ID || '',
 };
 
 const requiredEnvVariables = [
   'RPC_ENDPOINT',
-  'HELIUS_API_KEY',
   'BOT_TELEGRAM_KEY',
   'TELEGRAM_WEBHOOK_SECRET',
   'WEBHOOK_URL',
   'PRIVY_APP_ID',
   'PRIVY_APP_SECRET',
-  'PRIVY_AUTHORIZATION_KEY_ID',
-  'PRIVY_AUTH_ID',
+  'PRIVY_AUTHORIZATION_KEY',
+  'PRIVY_AUTHORIZATION_ID',
 ];
 
 requiredEnvVariables.forEach((variable) => {

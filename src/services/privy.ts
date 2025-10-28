@@ -10,7 +10,7 @@ function getPrivyClient(): PrivyClient {
   if (!privyClient) {
     privyClient = new PrivyClient(config.PRIVY_APP_ID, config.PRIVY_APP_SECRET, {
       walletApi: {
-        authorizationPrivateKey: config.PRIVY_AUTHORIZATION_KEY_ID
+        authorizationPrivateKey: config.PRIVY_AUTHORIZATION_KEY
       }
     });
   }
@@ -60,7 +60,7 @@ export async function createWallet(userId: string): Promise<any> {
         userId: userId
       },
       additionalSigners: [{
-        signerId: config.PRIVY_AUTH_ID
+        signerId: config.PRIVY_AUTHORIZATION_ID
       }]
     });
 
@@ -140,7 +140,7 @@ export async function signTransaction(walletId: string, transactionBase64: strin
     const transactionBytes = Buffer.from(transactionBase64, 'base64');
     
     // Create VersionedTransaction from raw bytes
-    const versionedTransaction = VersionedTransaction.deserialize(transactionBytes);
+    const versionedTransaction = VersionedTransaction.deserialize(new Uint8Array(transactionBytes));
     
     const result = await privy.walletApi.solana.signTransaction({
       walletId: walletId,
